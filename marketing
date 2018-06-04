@@ -1,0 +1,388 @@
+# -*- coding: utf-8 -*-
+
+import pandas as pd
+import numpy as np
+from statistics import mode
+import matplotlib.pyplot as plt
+import seaborn as sns
+data = pd.read_csv("C:\\Users\\user\\Desktop\\New folder\\camera.csv")
+print(data.info())
+print()
+print(data.dtypes)
+print()
+print(data[['Model','Release date','Price']].head(25))
+print()
+print(data.describe())
+print()
+print('Summary Statistics for Price : ')
+print('Mean :',np.mean(data['Price']))
+print()
+print('Median :',np.median(data['Price']))
+print()
+print('Mode :',mode(data['Price']))
+print()
+price_1k = data[data['Price']>1000]
+plt.bar(price_1k['Release date'],price_1k['Price'])
+plt.xlabel('Release Date')
+plt.ylabel('Price')
+plt.title('Price>1000')
+
+corr = data.corr()
+sns.heatmap(corr, xticklabels=corr.columns,yticklabels=corr.columns)
+
+
+
+
+# 3rd question
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+df = pd.read_csv(r"C:\\Users\\user\\Desktop\\exam\\exam.csv")
+df = df.replace(' ?',np.NaN)
+df = df.replace(' <=5Lakhs',0)
+df = df.replace(' >5Lakhs',1)
+df = df.dropna()
+
+Y = df["Income(Rs)"]
+cat_X = [i for i in df.columns if i!="Income(Rs)"]
+X = df[cat_X]
+print(X.columns)
+
+table = pd.crosstab(X["Age"],Y).plot(kind='bar', stacked=True)
+plt.title('Stacked Bar Chart of Age vs Income(Rs)')
+plt.xlabel('Age')
+plt.ylabel('Income(Rs)(0<=5Lakhs,1>5Lakhs)')
+
+table1 = pd.crosstab(X["Employment"],Y).plot(kind='bar', stacked=True)
+plt.title('Stacked Bar Chart of Employment vs Income(Rs)')
+plt.xlabel('Employment')
+plt.ylabel('Income(Rs)(0<=5Lakhs,1>5Lakhs)')
+
+table2 = pd.crosstab(X["MaritalStatus"],Y).plot(kind='bar', stacked=True)
+#table2.div(table2.sum(1).astype(float),axis=0).plot(kind='bar', stacked=True)
+plt.title('Stacked Bar Chart of MaritalStatus vs Income(Rs)')
+plt.xlabel('MaritalStatus')
+plt.ylabel('Income(Rs)(0<=5Lakhs,1>5Lakhs)')
+
+
+table6 = pd.crosstab(X["Gender"],Y).plot(kind='bar', stacked=True)
+plt.title('Stacked Bar Chart of Gender vs Income(Rs)')
+plt.xlabel('Gender')
+plt.ylabel('Income(Rs)(0<=5Lakhs,1>5Lakhs)')
+print(df.groupby("Gender").count())
+
+cat_vars = ['Age','Employment','MaritalStatus','Gender']
+for i in cat_vars:
+    cat_list = 'var'+'_'+i
+    cat_list = pd.get_dummies(X[i],prefix=i)
+    x1= X.join(cat_list)
+    X=x1
+
+to_keep = [i for i in X.columns if i not in cat_vars]
+X_Final = X[to_keep]
+
+# PackAges for RFE and LogisticRegression
+from sklearn.linear_model import LogisticRegression
+from sklearn.feature_selection import RFE
+logistic = LogisticRegression()
+rfe = RFE(logistic,20)
+rfe.fit(X_Final,Y)
+print(rfe.support_)
+print(rfe.ranking_)
+selected_columns =[]
+for i in range(len(rfe.support_)):
+    if(rfe.support_[i] == True):
+        selected_columns.append(to_keep[i])
+ 
+X_Report = X_Final[selected_columns]       
+
+from scipy import stats
+stats.chisqprob = lambda chisq, df: stats.chi2.sf(chisq,df)
+import statsmodels.api as sm
+logit_model=sm.Logit(Y,X_Report)
+result=logit_model.fit()
+print(result.summary())
+
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X_Report, Y, test_size=0.3, random_state=0)
+from sklearn.linear_model import LogisticRegression
+logreg = LogisticRegression()
+logreg.fit(X_train, y_train)
+    
+y_pred = logreg.predict(X_test)
+print('Accuracy of logistic regression classifier on test set: {:.2f}'.format(logreg.score(X_test, y_test)))
+
+from sklearn import model_selection
+#from sklearn.model_selection import cross_val_score
+kfold = model_selection.KFold(n_splits=5, random_state=7)
+modelCV = LogisticRegression()
+scoring = 'accuracy'
+results = model_selection.cross_val_score(modelCV, X_train, y_train, cv=kfold, scoring=scoring)
+print("10-fold cross validation averAge accuracy: %.3f" % (results.mean()))
+
+from sklearn.metrics import confusion_matrix
+confusion_matrix = confusion_matrix(y_test, y_pred)
+print(confusion_matrix)
+
+
+
+#4th question :
+#stack evaluation
+#4a. Infix stack expressions
+# Stack implementation
+class Stack:  
+  # constructor for the Stack class
+  def __init__(self):
+    # initialise an empty list
+    self.stack = []
+    # self.stack = list() works the same way as above code  
+  # push the number into the stack
+  def push(self, data):
+    if data not in self.stack:
+      self.stack.append(data)
+      return True
+    else:
+      return False
+  # remove the top element
+  def pop(self):
+    if len(self.stack) <= 0:
+      return "Stack is empty!"
+    else:
+      return self.stack.pop()  
+  # returns the size of the element
+  def size(self):
+    return len(self.stack)
+  # peek to see the top element
+  def peek(self):
+    return self.stack[-1]
+
+  # to check if stck is empty
+  def isEmpty(self):
+    if len(self.stack) <= 0:
+      return True
+    else:
+      return False  
+  # show the content of stack
+  def show(self):
+    return self.stack
+# Simple method to apply operator to numbers
+def applyOp(op, var2, var1):
+  if op == '+':
+    print ('Adding numbers...')
+    return int(var1) + int(var2)
+  elif op == '-':
+    print ('Subtracting numbers...')
+    return int(var1) - int(var2)
+  elif op == '*':
+    print ('Multiplying numbers...')
+    return int(var1) * int(var2)
+  elif op == '/':
+    print ('Dividing numbers...')
+    if var2 == 0:
+      return "infinity"
+    else:
+      return int(var1) / int(var2)
+  else:
+    return 0
+# check for precedence of operators
+# returns True if op2 has higher precedence than op1
+def hasPrecedence(op1, op2):
+  if op2 == '(' or op2 == ')':
+    return False
+  elif (op1 == '*' or op1 == '/') and (op2 == '+' or op2 == '-'):
+    return False
+  else:
+    return True
+# Sample expression
+expr = input("Enter the expression:")
+# breaking down the expression into tokens
+tokens = map(str, expr)
+# removing the spaces from the list of tokens
+tokens = ' '.join(tokens).split()
+# stack to hold operands/numbers
+var = Stack()
+# stack to hold operators and parenthesis
+ops = Stack()
+
+skip = 0
+for i in range(len(tokens)):
+  # if skip is more than 0 skip the iteration
+  if skip >= 1:
+    # decrement skip flag
+    skip -= 1
+    continue
+  # if we found a number
+  if tokens[i] >= '0' and tokens[i] <= '9':
+    num = tokens[i]
+    # look for consecutive digits and append to num
+    for j in range(i+1, len(tokens)):
+      if tokens[j] >= '0' and tokens[j] <= '9':
+        num = num + tokens[j]
+        skip += 1
+      else:
+        break
+    # push the number into var stack
+    var.push(num)
+    print (var.show())  
+  # if we find a opening parenthesis
+  elif tokens[i] == '(':
+    # add it to the ops stack
+    ops.push(tokens[i])
+  # if we find a closing parenthesis
+  elif tokens[i] == ')':
+    print ("Encountered closing parenthesis...")
+    while ops.peek() != '(':
+      # solve the expression uptil this point
+      value = applyOp(ops.pop(), var.pop(), var.pop())
+      if(value == "infinity"):
+        print ("Invalid Expression")
+        break
+      else:
+        print (value)
+        var.push(value)
+    ops.pop()
+ 
+  # if we find any operator
+  elif tokens[i] in ('+','-','*','/','^'):
+    while ops.isEmpty() is False and hasPrecedence(tokens[i], ops.peek()):
+      x = applyOp(ops.pop(), var.pop(), var.pop())
+      print (x)
+      var.push(x);
+    # otherwise push the operator into ops stack
+    ops.push(tokens[i]);
+    print (ops.show())
+# by this point entire expression has been parsed
+# now apply operators to values stored in var stack
+while(ops.isEmpty() is False):
+  var.push(applyOp(ops.pop(), var.pop(), var.pop()));
+# print the final result 
+print ("Result of the expression is " + str(var.pop()))
+
+
+
+
+
+#4b 
+OPERATORS = set(['+', '-', '^', '*', '/', '(', ')'])
+PRIORITY = {'+':1, '-':1, '*':2, '/':2, '^':3}
+def infix_to_postfix(formula):
+    stack = [] # only pop when the coming op has priority 
+    output = ''
+    for ch in formula:
+        if ch not in OPERATORS:
+            output += ch
+        elif ch == '(':
+            stack.append('(')
+        elif ch == ')':
+            while stack and stack[-1] != '(':
+                output += stack.pop()
+            stack.pop() # pop '('
+        else:
+            while stack and stack[-1] != '(' and PRIORITY[ch] <= PRIORITY[stack[-1]]:
+                output += stack.pop()
+            stack.append(ch)
+    # leftover
+    while stack: output += stack.pop()
+    print (output)
+    return output
+def evaluate_postfix(formula):
+    stack = []
+    for ch in formula:
+        if ch not in OPERATORS:
+            stack.append(float(ch))
+        else:
+            b = stack.pop()
+            a = stack.pop()
+            c = {'+':a+b, '-':a-b, '*':a*b, '/':a/b}[ch]
+            stack.append(c)
+    print (stack[-1])
+    return stack[-1]
+if __name__ == '__main__':
+    infix_to_postfix('a+b*(c^d-e)^(f+g*h)-i') #having variables is executing
+    infix_to_postfix('x^ y/(5*z)+10)') #having numbers showing some errors
+    
+    
+#Infix to Prefix
+### INFIX ===> PREFIX ###
+OPERATORS = set(['+', '-', '^', '*', '/', '(', ')'])
+PRIORITY = {'+':1, '-':1, '*':2, '/':2, '^':3}
+def infix_to_prefix(formula):
+    op_stack = []
+    exp_stack = []
+    for ch in formula:
+        if not ch in OPERATORS:
+            exp_stack.append(ch)
+        elif ch == '(':
+            op_stack.append(ch)
+        elif ch == ')':
+            while op_stack[-1] != '(':
+                op = op_stack.pop()
+                a = exp_stack.pop()
+                b = exp_stack.pop()
+                exp_stack.append( op+b+a )
+            op_stack.pop() # pop '('
+        else:
+            while op_stack and op_stack[-1] != '(' and PRIORITY[ch] <= PRIORITY[op_stack[-1]]:
+                op = op_stack.pop()
+                a = exp_stack.pop()
+                b = exp_stack.pop()
+                exp_stack.append( op+b+a )
+            op_stack.append(ch)
+    
+    # leftover
+    while op_stack:
+        op = op_stack.pop()
+        a = exp_stack.pop()
+        b = exp_stack.pop()
+        exp_stack.append( op+b+a )
+    print (exp_stack[-1])
+    return exp_stack[-1]
+def evaluate_prefix(formula):
+    exps = list(formula)
+    while len(exps) > 1:
+        for i in range(len(exps)-2):
+            if exps[i] in OPERATORS:
+                if not exps[i+1] in OPERATORS and not exps[i+2] in OPERATORS:
+                    op, a, b = exps[i:i+3]
+                    a,b = map(float, [a,b])
+                    c = {'+':a+b, '-':a-b, '*':a*b, '/':a/b}[op]
+                    exps = exps[:i] + [c] + exps[i+3:]
+                    break
+        print (exps)
+    return exps[-1]
+if __name__ == '__main__':
+    infix_to_prefix('a+b*(c^d-e)^(f+g*h)-i')
+    infix_to_prefix('x ^ y / (5*z)+10)') #having numbers showing some errors
+
+
+
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Jun  4 17:41:35 2018
+
+@author: user
+"""
+
+#import numpy as np
+#import pandas as pd
+salary = []
+age = []
+name = []
+department = []
+for i in range(0,14):
+    n = str(input("Enter the name of the employee:"))
+    name.append(n)
+    a = int(input("Enter the age of the employee:"))
+    age.append(a)
+    s = int(input("Enter the salary of the employee"))
+    salary.append(s)
+    d = str(input("Enter the department of the employee"))
+    department.append(d)
+    
+Age = age.sort()
+print("sorted age of employees",Age)
+
+salary.
+    groupby()
